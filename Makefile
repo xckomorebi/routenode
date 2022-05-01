@@ -10,4 +10,4 @@ test3:
 	python routenode.py dv r 123 3333 1111 50 2222 2 4444 5
 
 test4:
-	python routenode.py dv r 123 4444 2222 8 3333 5 last
+	python routenode.py dv r 123 4444 2222 8 3333 5 last 2

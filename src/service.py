@@ -2,6 +2,8 @@ import copy
 import json
 import time
 
+DEBUG = True
+
 
 def build_table(dv):
     """
@@ -11,7 +13,7 @@ def build_table(dv):
     return result
 
 
-def update_table(dv, routing_table, rcv_table, port) -> bool:
+def update_table(dv, routing_table, nei_table, rcv_table, port) -> bool:
     """
     Return
     ---
@@ -20,25 +22,28 @@ def update_table(dv, routing_table, rcv_table, port) -> bool:
         from adjacent node
     """
     old_table = copy.copy(routing_table)
-    node = next(iter(rcv_table))
-    node_distance = dv[int(node)]
-    rcv_distance = rcv_table[node]
+    nei_table.update(rcv_table)
+    routing_table.clear()
 
-    rcv_distance.pop(str(port))
+    routing_table.update(build_table(dv))
+    for node in nei_table:
+        node_distance = dv[int(node)]
+        node_table = copy.copy(nei_table[node])
+        node_table.pop(str(port), None)
 
-    for dest in rcv_distance:
-        distance = rcv_distance[dest]["distance"] + node_distance
-        if dest not in routing_table:
-            routing_table[dest] = {
-                "prev": node,
-                "distance": distance
-            }
-        else:
-            if distance < routing_table[dest]["distance"]:
+        for dest in node_table:
+            distance = node_table[dest]["distance"] + node_distance
+            if dest not in routing_table:
                 routing_table[dest] = {
                     "prev": node,
                     "distance": distance
                 }
+            else:
+                if distance < routing_table[dest]["distance"]:
+                    routing_table[dest] = {
+                        "prev": node,
+                        "distance": distance
+                    }
 
     return old_table != routing_table
 
@@ -47,6 +52,17 @@ def broadcast_table(sock, port, dv, routing_table):
     msg = encode_msg(port, "routing_table", routing_table)
     for node in dv:
         sock.sendto(msg, ("", node))
+
+
+def send_dv_update(sock, port, cost_change):
+    interval = 5 if DEBUG else 30
+    time.sleep(interval)
+    msg = encode_msg(port, "dv_update", cost_change)
+    node = next(iter(cost_change))
+    value = cost_change[node]
+
+    sock.sendto(msg, ("", next(iter(cost_change))))
+    print(f"[{time.time():.3f}] Node {node} cost updated to {value}\n")
 
 
 def encode_msg(port, type_, data):

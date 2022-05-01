@@ -1,6 +1,7 @@
 import os
 import argparse
 from src.dv import dv_main
+from src.ls import ls_main
 
 from src.utils import *
 
@@ -55,7 +56,7 @@ def main():
     if algo == "dv":
         dv_main(port, mode, *rest)
     else:
-        pass
+        ls_main(port, mode, update_interval, *rest)
 
 if __name__ == "__main__":
     main()
