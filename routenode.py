@@ -1,5 +1,6 @@
 import os
 import argparse
+from src.dv import dv_main
 
 from src.utils import *
 
@@ -42,15 +43,17 @@ def get_args():
 def main():
     args = get_args()
     algo = check_algo(args.algorithm[0])
-    update_interval = int(args.update_interval[0])
     port = check_port(args.local_port[0])
     mode = check_mode(args.mode[0])
     rest = check_neis(args.neighbors)
 
-    print(rest)
+    try:
+        update_interval = int(args.update_interval[0])
+    except ValueError:
+        exit_msg("update_interval should be an integer!")
 
     if algo == "dv":
-        
+        dv_main(port, mode, *rest)
     else:
         pass
 

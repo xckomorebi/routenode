@@ -91,4 +91,3 @@ def check_port(port):
 if __name__ == "__main__":
     nei = ["1111", "2", "3333", "12", "2222", "4", "last", "4123"]
     print(check_neis(nei))
-
