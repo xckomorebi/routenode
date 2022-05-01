@@ -1,0 +1,11 @@
+__pycache__
+*.py[cod]
+test.py
+
+.DS_Store
+.vscode
+
+*.db
+
+*.pdf
+*.sh
