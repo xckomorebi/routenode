@@ -33,7 +33,7 @@ def dv_main(port, mode, dv, is_last, cost_change):
             if changed or first_send:
                 broadcast_table(send_sock, port, dv, routing_table)
                 first_send = False
-            if changed:
+            # if changed:
                 print_table(routing_table, port)
 
         elif type_ == "dv_update":

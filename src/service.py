@@ -1,8 +1,9 @@
+import os
 import copy
 import json
 import time
 
-DEBUG = True
+DEBUG = os.getenv("PA2_DEBUG", 0)
 
 
 def build_table(dv):
