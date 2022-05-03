@@ -20,18 +20,19 @@ def dv_main(port, mode, dv, is_last, cost_change):
     first_send = True
 
     if is_last:
-        broadcast_table(send_sock, port, dv, routing_table)
+        broadcast_table(send_sock, port, dv, routing_table, None)
         first_send = False
 
     while True:
         raw_msg = listen_sock.recv(2048) 
         rcv_msg = decode_msg(raw_msg)
         type_ = rcv_msg.pop("type_")
+        poisoned = None
 
         if type_ == "routing_table":
-            changed = update_table(dv, routing_table, nei_table, rcv_msg, port)
+            changed, poisoned = update_table(dv, routing_table, nei_table, rcv_msg, port, mode)
             if changed or first_send:
-                broadcast_table(send_sock, port, dv, routing_table)
+                broadcast_table(send_sock, port, dv, routing_table, poisoned)
                 first_send = False
             # if changed:
                 print_table(routing_table, port)
@@ -49,7 +50,7 @@ def dv_main(port, mode, dv, is_last, cost_change):
                 print(f"[{time.time():.3f}] Link value message sent from Node {sender} to Node {receiver}\n")
                 send_sock.sendto(raw_msg, ("", int(sender)))
 
-            changed = update_table(dv, routing_table, nei_table, {}, port)
+            changed, poisoned = update_table(dv, routing_table, nei_table, {}, port, mode)
             if changed:
-                broadcast_table(send_sock, port, dv, routing_table) 
+                broadcast_table(send_sock, port, dv, routing_table, poisoned)
                 print_table(routing_table, port)

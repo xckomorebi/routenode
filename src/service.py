@@ -14,7 +14,7 @@ def build_table(dv):
     return result
 
 
-def update_table(dv, routing_table, nei_table, rcv_table, port) -> bool:
+def update_table(dv, routing_table, nei_table, rcv_table, port, mode) -> bool:
     """
     Return
     ---
@@ -25,6 +25,7 @@ def update_table(dv, routing_table, nei_table, rcv_table, port) -> bool:
     old_table = copy.copy(routing_table)
     nei_table.update(rcv_table)
     routing_table.clear()
+    poisoned = None
 
     routing_table.update(build_table(dv))
     for node in nei_table:
@@ -34,6 +35,11 @@ def update_table(dv, routing_table, nei_table, rcv_table, port) -> bool:
 
         for dest in node_table:
             distance = node_table[dest]["distance"] + node_distance
+            if mode == "p":
+                if node_table[dest]["prev"] == str(port):
+                    distance = float("inf")
+                    poisoned = dest
+
             if dest not in routing_table:
                 routing_table[dest] = {
                     "prev": node,
@@ -46,13 +52,15 @@ def update_table(dv, routing_table, nei_table, rcv_table, port) -> bool:
                         "distance": distance
                     }
 
-    return old_table != routing_table
+    return old_table != routing_table, poisoned
 
 
-def broadcast_table(sock, port, dv, routing_table):
+def broadcast_table(sock, port, dv, routing_table, poisoned):
     msg = encode_msg(port, "routing_table", routing_table)
     for node in dv:
         sock.sendto(msg, ("", node))
+        if poisoned:
+            print(f"[{time.time():.3f}] Message sent from Node {port} to Node {node} with distance to Node {poisoned} as inf\n")
 
 
 def send_dv_update(sock, port, cost_change):
