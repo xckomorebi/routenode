@@ -59,4 +59,8 @@ def main():
         ls_main(port, mode, update_interval, *rest)
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        print("\nGood Bye!")
+        os._exit(0)

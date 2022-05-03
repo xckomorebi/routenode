@@ -20,20 +20,14 @@ Mode:
 ===
 ## Distance-Vector Routing Algorithm
 
-## Link State Routing Protocol
-
-Tech details
-===
-
-### msg format
 ```python
+# for node xxxx
 dv = {
-
+    <port_yyyy>: <distance>
 }
 
-
-
-msg = {
+# socket communication
+msg_broadcast_table = {
     "type_": "routing_table"
     <port_xxxx>: {
         <port_yyyy>: {
@@ -47,10 +41,35 @@ msg = {
     }
 }
 
-msg2 = {
+msg_dv_update = {
     "type_": "dv_update",
     <port_xxxx>: {
         <port_yyyy>: <new_distance>
     }
 }
+
+```
+## Link State Routing Protocol
+each node keeps those tables in memeory
+```python
+seq_num = {
+    <port_xxxx>: <no>
+}
+
+dv
+
+lsa
+
+nei_lsa
+```
+
+
+```python
+msg = {
+    "type_": "lsa",
+    "from_": <port_xxxx>,
+    "seq_num": 0,
+    "data": 
+}
+
 ```
