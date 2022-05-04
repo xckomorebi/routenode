@@ -14,7 +14,7 @@ Usage:
 ```bash
 $  ./routenode dv <r/p> <update-interval> <local-port> <neighbor1-port> <cost-1> <neighbor2-port> <cost-2> ... [last][cost-change]
 ```
-Port number should be an integer between 1024 and 65535!
+Port number should be an integer between 1024 and 65535
 
 Mode:
 ===
@@ -53,23 +53,39 @@ msg_dv_update = {
 each node keeps those tables in memeory
 ```python
 seq_num = {
-    <port_xxxx>: <no>
+    <port_xxxx>: <number>
 }
 
-dv
+# for one node, xxxx is always smaller than yyyy and zzzz
+lsa = {
+    <port_xxxx>: {
+        <port_yyyy>: <distance1>,
+        <port_zzzz>: <distance2>
+    }
+}
 
-lsa
-
-nei_lsa
+# conbination of all known lsa table
+nei_lsa = {
+    <port_xxxx>: {
+        <port_yyyy>: <distance1>,
+        <port_zzzz>: <distance2>
+    },
+    <port_yyyy>: {
+        <port_zzzz> <distance3>
+    }
+}
 ```
 
 
 ```python
 msg = {
-    "type_": "lsa",
-    "from_": <port_xxxx>,
-    "seq_num": 0,
-    "data": 
+    "port": <port_xxxx>
+    "type_": "lsa" or "update_dv",
+    "seq_num": {
+        <port_xxxx>: <num>
+    },
+    "data": <dict>
 }
-
 ```
+the `port` in msg is actually the node which send the or forward the message, the original sender information is
+included in `seq_num`

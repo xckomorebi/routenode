@@ -1,0 +1,87 @@
+[1651650139.681] Node 4444 Network topology
+- (8) from Node 2222 to Node 4444
+- (5) from Node 3333 to Node 4444
+
+[1651650139.681] LSA of Node 4444 with sequence number 0 sent to Node 3333
+
+[1651650139.681] LSA of Node 4444 with sequence number 0 sent to Node 2222
+
+[1651650139.682] LSA of node 3333 with sequence number 0 received from Node 4444
+
+[1651650139.682] LSA of Node 3333 with sequence number 0 sent to Node 2222
+
+[1651650139.682] LSA of node 2222 with sequence number 0 received from Node 4444
+
+[1651650139.683] LSA of Node 2222 with sequence number 0 sent to Node 3333
+
+[1651650139.683] DUPLICATE LSA packet Received, AND DROPPED:
+- LSA of node 3333
+- Sequence number 0
+- Received from 4444
+
+[1651650139.683] LSA of node 1111 with sequence number 0 received from Node 4444
+
+[1651650139.684] LSA of Node 1111 with sequence number 0 sent to Node 2222
+
+[1651650139.684] DUPLICATE LSA packet Received, AND DROPPED:
+- LSA of node 1111
+- Sequence number 0
+- Received from 4444
+
+[1651650144.692] LSA of Node 4444 with sequence number 0 sent to Node 3333
+
+[1651650144.692] LSA of Node 4444 with sequence number 0 sent to Node 2222
+
+[1651650145.023] DUPLICATE LSA packet Received, AND DROPPED:
+- LSA of node 3333
+- Sequence number 0
+- Received from 4444
+
+[1651650145.662] DUPLICATE LSA packet Received, AND DROPPED:
+- LSA of node 2222
+- Sequence number 0
+- Received from 4444
+
+[1651650149.687] Node 4444 Routing Table
+- (5) -> Node 3333
+- (7) -> Node 2222 ; Next hop -> Node 3333
+- (8) -> Node 1111 ; Next hop -> Node 2222
+
+[1651650149.883] LSA of Node 4444 with sequence number 0 sent to Node 3333
+
+[1651650149.883] LSA of Node 4444 with sequence number 0 sent to Node 2222
+
+[1651650150.743] DUPLICATE LSA packet Received, AND DROPPED:
+- LSA of node 2222
+- Sequence number 0
+- Received from 4444
+
+[1651650150.784] DUPLICATE LSA packet Received, AND DROPPED:
+- LSA of node 3333
+- Sequence number 0
+- Received from 4444
+
+[1651650151.687] Node 3333 cost updated to 20
+
+[1651650151.687] LSA of Node 4444 with sequence number 1 sent to Node 3333
+
+[1651650151.687] LSA of Node 4444 with sequence number 1 sent to Node 2222
+
+[1651650151.689] LSA of node 3333 with sequence number 1 received from Node 4444
+
+[1651650151.689] LSA of Node 3333 with sequence number 1 sent to Node 2222
+
+[1651650151.689] Node 4444 Network topology
+- (8) from Node 2222 to Node 4444
+- (20) from Node 3333 to Node 4444
+
+[1651650151.689] Node 4444 Routing Table
+- (8) -> Node 2222
+- (9) -> Node 1111 ; Next hop -> Node 2222
+- (10) -> Node 3333 ; Next hop -> Node 2222
+
+[1651650151.689] DUPLICATE LSA packet Received, AND DROPPED:
+- LSA of node 3333
+- Sequence number 1
+- Received from 4444
+

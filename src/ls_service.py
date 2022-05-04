@@ -2,12 +2,15 @@ import os
 import json
 import time
 import heapq
+import random
 
 DEBUG = os.getenv("PA2_DEBUG", 0)
 
 
 def build_lsa(port, dv):
     """
+    convert distance vector from command line input
+    to local lsa for the node itself
     """
     result = dict()
     for k, v in dv.items():
@@ -22,18 +25,62 @@ def build_lsa(port, dv):
     return result
 
 
-# TODO
 def update_dv(update_interval,
               send_sock,
               neis_set,
               port,
               lsa,
               seq_num):
+    """
+    broadcast lsa table of the node to
+    all neighbors once every update_interval
+
+    Parameters
+    ---
+    update_interval : int
+        from command line argument
+
+    send_sock : socket.socket
+
+    neis_set : set
+        a set of all neighbors for this node
+
+    port : int
+
+    lsa : dict
+        local lsa table
+
+    seq_num : dict
+        {
+            <port_xxx>: seq_num
+        }
+    """
     print_topology(port, lsa)
     while True:
         msg = mk_packet(port, "lsa", lsa, seq_num)
         broadcast_msg(send_sock, neis_set, msg)
-        time.sleep(update_interval)
+        time.sleep(update_interval + random.uniform(0, 1))
+
+
+def send_dv_update(sock, port, seq_num, cost_change, lsa, nei_lsa, nei_seq, neis_set):
+    k = str(port)
+    v = next(iter(cost_change))
+    d = cost_change[v]
+
+    msg = mk_packet(port, "update_dv", cost_change, seq_num)
+    sock.sendto(msg, ("", v))
+    print(f"[{time.time():.3f}] Node {v} cost updated to {d}\n")
+
+    if int(k) > v:
+        k, v = v, k
+
+    lsa[str(k)][str(v)] = d
+
+    seq_num[str(port)] += 1
+    update_lsa(nei_lsa, nei_seq, lsa, seq_num)
+
+    msg = mk_packet(port, "lsa", lsa, seq_num)
+    broadcast_msg(sock, neis_set, msg)
 
 
 def mk_packet(port, type_, data, seq_num):
@@ -57,7 +104,9 @@ def broadcast_msg(send_sock, neis_set, msg):
     for node in neis_set:
         send_sock.sendto(msg, ("", node))
         print(
-            f"[{time.time():.3f}] LSA of Node {k} with sequence number {v} sent to Node {node}\n")
+            f"[{time.time():.3f}] LSA of Node {k} with",
+            f"sequence number {v} sent to Node {node}\n"
+            )
 
 
 def update_lsa(nei_lsa, nei_seq, node_lsa, node_seq):
@@ -84,6 +133,9 @@ def print_topology(port, lsa):
 
 
 def expand_node(node, nei_lsa):
+    """
+    get the distance for one node
+    """
     result = nei_lsa.get(node, {})
     result2 = {k: d for k, v in nei_lsa.items()
                for n, d in v.items() if n == node}
@@ -92,26 +144,29 @@ def expand_node(node, nei_lsa):
     return result
 
 
-def print_table(port, nei_lsa):
-    # all_nodes = node_set(nei_lsa) - {str(port)}
-    visited = {}
-
+def compute_routing_table(port, nei_lsa, routing_table):
+    routing_table.clear()
     h = []
     heapq.heappush(h, (0, str(port), None))
 
     while h:
         cur_dist, node, prev = heapq.heappop(h)
-        if not node in visited:
+        if not node in routing_table:
             if prev == str(port):
                 prev = None
-            visited.update({node: (cur_dist, prev)})
+            routing_table.update({node: (cur_dist, prev)})
             for next_node, dist in expand_node(node, nei_lsa).items():
                 heapq.heappush(h, (dist + cur_dist, next_node, node))
 
-    msg = f"[{time.time():.3f}] Node {port} Routing Table\n"
-    visited.pop(str(port))
+    routing_table.pop(str(port))
 
-    for node, (dist, prev) in visited.items():
+
+def print_table(port, nei_lsa, routing_table):
+    compute_routing_table(port, nei_lsa, routing_table)
+
+    msg = f"[{time.time():.3f}] Node {port} Routing Table\n"
+
+    for node, (dist, prev) in routing_table.items():
         if prev:
             msg += f"- ({dist}) -> Node {node} ; Next hop -> Node {prev}\n"
         else:
@@ -121,33 +176,15 @@ def print_table(port, nei_lsa):
 
 
 def node_set(nei_lsa):
+    """
+    Return
+    ---
+    result : set
+        return a set of all nodes that appears
+        in lsa table of all neighbors
+    """
     result = set(nei_lsa.keys())
     for k, v in nei_lsa.items():
         result.update(set(v.keys()))
 
     return result
-
-
-def send_dv_update(sock, port, seq_num, cost_change, lsa, nei_lsa, nei_seq, neis_set):
-    interval = 2 if DEBUG else 30
-    time.sleep(interval)
-    k = str(port)
-    v = next(iter(cost_change))
-    d = cost_change[v]
-
-    msg = mk_packet(port, "update_dv", cost_change, seq_num) 
-    sock.sendto(msg, ("", v))
-    print(f"[{time.time():.3f}] Node {v} cost updated to {d}\n")
-
-    if int(k) > v:
-        k, v = v, k
-
-    lsa[str(k)][str(v)] = d
-
-    seq_num[str(port)] += 1
-    update_lsa(nei_lsa, nei_seq, lsa, seq_num)
-
-    msg = mk_packet(port, "lsa", lsa, seq_num)
-    broadcast_msg(sock, neis_set, msg)
-
-    print_table(port, nei_lsa)
