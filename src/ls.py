@@ -12,13 +12,12 @@ def ls_main(port, mode, update_interval, dv, is_last, cost_change):
         os._exit(1)
 
     neis_set = set(dv.keys())
-    # print(dv)
 
     lsa = build_lsa(port, dv)
     nei_lsa = copy.deepcopy(lsa)
 
     seq_num = {str(port): 0}
-    nei_seq = copy.copy(seq_num)
+    nei_seq = copy.deepcopy(seq_num)
 
     rcv_from_all_neis = False
 
@@ -37,15 +36,26 @@ def ls_main(port, mode, update_interval, dv, is_last, cost_change):
 
     started = False
 
+    if cost_change:
+        thread2 = Thread(target=send_dv_update,
+                         args=(send_sock,
+                               port,
+                               seq_num,
+                               cost_change,
+                               lsa,
+                               nei_lsa,
+                               nei_seq,
+                               neis_set))
+        thread2.start()
+
     if is_last:
-        msg = mk_packet(port, "lsa", lsa, seq_num)
-        broadcast_msg(send_sock, neis_set, msg)
+        # msg = mk_packet(port, "lsa", lsa, seq_num)
+        # broadcast_msg(send_sock, neis_set, msg)
         thread.start()
         started = True
 
     while True:
-        raw_msg, addr = listen_sock.recvfrom(2048)
-        prev_node = str(addr[1])
+        raw_msg = listen_sock.recv(2048)
         rcv_msg = decode(raw_msg)
 
         type_ = rcv_msg.pop("type_")
@@ -53,31 +63,47 @@ def ls_main(port, mode, update_interval, dv, is_last, cost_change):
 
         if type_ == "lsa":
             node_lsa = rcv_msg.get("data")
-            node = rcv_msg.get("port")
+            prev_node = rcv_msg.get("port")
             node_seq = rcv_msg.get("seq_num")
+            node = next(iter(node_seq.keys()))
 
             if node_seq[node] > nei_seq.get(node, -1):
                 nei_seq[node] = rcv_msg.get("seq_num")[node]
-                # TODO
-                # print(f"[{time.time():.3f}] LSA of node {node} with",
-                #       f"sequence number {nei_seq[node]} received from Node {port}\n")
+                print(f"[{time.time():.3f}] LSA of node {node} with",
+                      f"sequence number {nei_seq[node]} received from Node {port}\n")
                 update_lsa(nei_lsa, nei_seq, node_lsa, node_seq)
-                broadcast_msg(send_sock, neis_set - set(prev_node), raw_msg)
+                fwd_msg = mk_packet(port, "lsa", node_lsa, node_seq)
+                broadcast_msg(send_sock, neis_set - {int(prev_node)}, fwd_msg)
                 updated = True
             else:
                 msg = f"""[{time.time():.3f}] DUPLICATE LSA packet Received, AND DROPPED:
 - LSA of node {node}
 - Sequence number {nei_seq[node]}
 - Received from {port}\n"""
-
-                # print(msg)
+                print(msg)
 
             if not started:
                 thread.start()
                 started = True
 
         elif type_ == "update_dv":
-            pass
+            new_cost = rcv_msg.get("data")
+            node = next(iter(rcv_msg.get("seq_num").keys()))
+
+            k = str(port)
+            v = node
+            d = new_cost[k]
+            if int(k) > int(v):
+                k, v = v, k
+            lsa[str(k)][str(v)] = d
+            print(f"[{time.time():.3f}] Node {v} cost updated to {d}\n")
+            print_topology(port, lsa)
+            update_lsa(nei_lsa, nei_seq, lsa, {})
+            print_table(port, nei_lsa)
+
+            seq_num[str(port)] += 1
+            msg = mk_packet(port, "lsa", lsa, seq_num)
+            broadcast_msg(send_sock, neis_set, msg)
 
         if rcv_from_all_neis and updated:
             print_table(port, nei_lsa)

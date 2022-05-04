@@ -1,6 +1,9 @@
+import os
 import json
 import time
 import heapq
+
+DEBUG = os.getenv("PA2_DEBUG", 0)
 
 
 def build_lsa(port, dv):
@@ -48,7 +51,7 @@ def decode(raw_msg):
 
 def broadcast_msg(send_sock, neis_set, msg):
     data = decode(msg)
-    port = data.get("port")
+    # port = data.get("port")
     # print(data.get("seq_num"))
     k, v = list(data.get("seq_num").items())[0]
     for node in neis_set:
@@ -123,3 +126,28 @@ def node_set(nei_lsa):
         result.update(set(v.keys()))
 
     return result
+
+
+def send_dv_update(sock, port, seq_num, cost_change, lsa, nei_lsa, nei_seq, neis_set):
+    interval = 2 if DEBUG else 30
+    time.sleep(interval)
+    k = str(port)
+    v = next(iter(cost_change))
+    d = cost_change[v]
+
+    msg = mk_packet(port, "update_dv", cost_change, seq_num) 
+    sock.sendto(msg, ("", v))
+    print(f"[{time.time():.3f}] Node {v} cost updated to {d}\n")
+
+    if int(k) > v:
+        k, v = v, k
+
+    lsa[str(k)][str(v)] = d
+
+    seq_num[str(port)] += 1
+    update_lsa(nei_lsa, nei_seq, lsa, seq_num)
+
+    msg = mk_packet(port, "lsa", lsa, seq_num)
+    broadcast_msg(sock, neis_set, msg)
+
+    print_table(port, nei_lsa)
